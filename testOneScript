@@ -1,0 +1,46 @@
+import pytest
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+
+link = 'https://only.digital/projects#brief'
+
+class TestOnly:
+    @pytest.fixture
+    def driver(self):
+        self.driver = webdriver.Chrome()
+        self.driver.get(link)
+        yield self.driver
+        self.driver.quit()
+       
+    def testOneOnly(self, driver):
+        driver.find_element(By.CSS_SELECTOR,'[placeholder="Имя*"]').send_keys('Алексей')
+        driver.find_element(By.CSS_SELECTOR,'[placeholder="E-mail*"]').send_keys('j78@gmail.com')
+        driver.find_element(By.NAME,'phone').send_keys('9223035566') #не получилось вписать в поле номер телефона
+        driver.find_element(By.CSS_SELECTOR,'[placeholder="Компания"]').send_keys('Эврика')
+        
+        checkboxOne = driver.find_element(By.XPATH,"//*[contains(text(), 'Сайт')]").click() 
+        
+        #есть еще такой вариант, но не уверен, что работает (тест с ним не падает)
+        '''checkbox = driver.find_elements(By.CSS_SELECTOR,('input [type="checkbox"]'))
+        for i in checkbox:
+            if not i.is_selected:
+                i.click()'''
+       
+        textarea = driver.find_element(By.NAME,'description').is_enabled() #элемент активен, но кликнуть на него или вписать в него не получилось (*)
+        
+        documents = driver.find_element(By.CLASS_NAME,'sc-80120d97-1 hdZhjZ').is_enabled() #здесь тест падает (*)
+        
+        #нашел способ вручную прокликивать радиобаттоны (через цикл тест падает)
+        budgetRadioOne = driver.find_element(By.XPATH,"//*[contains(text(), 'Менее 2 млн')]").click() 
+        recommendationRadioOne = driver.find_element(By.XPATH,"//*[contains(text(), 'Соцсети')]").click()
+
+        #здесь тест падает, кликнуть на капчу не получилось (пока), интересно:) (*)
+        captchaGoogle = WebDriverWait(driver,10).until(EC.element_to_be_clickable(((By.CSS_SELECTOR,'#recaptcha-anchor')))).is_enabled()
+        
+        #кнопка неактивна, тк не получилось кликнуть на капчу выше + номер телефона не заполнен (обязательное поле) (*)
+        confirmationButton = driver.find_element(By.CLASS_NAME,'sc-de2cbdbd-1 cMflFB').is_enabled()
+        
+        #time.sleep(10)
